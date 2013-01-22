@@ -40,10 +40,10 @@ Example
 Example lighttpd configuration
 ------------------------------
 
-To make go-share appear on http://example.com/shared/ add the following to your
+To make go-share appear on http://shared.example.com/ add the following to your
 lighttpd.conf (assuming you used the port number as in the example above):
 
-	$HTTP["url"] =~ "^/shared/" {
+	$HTTP["host"] =~ "^shared\.example\.com$" {
 	     proxy.server  = ( "" => ( ("host" => "127.0.0.1", "port" => "9321") ) )
 	}
 
