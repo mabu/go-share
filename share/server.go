@@ -85,7 +85,7 @@ func (s *Server) Start(port int) error {
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
 		if r.FormValue("upload") != "" {
-			executeTemplate(tmplMessage, &w, s.handleAdd(r))
+			executeTemplate(tmplMessage, w, s.handleAdd(r))
 		} else {
 			s.list.RLock()
 			if s.list.dirty {
@@ -106,17 +106,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				s.list.Unlock()
 				s.list.RLock()
 			}
-			executeTemplate(tmplList, &w, s.list.slice)
+			executeTemplate(tmplList, w, s.list.slice)
 			s.list.RUnlock()
 		}
-	} else if err := s.serve(&w, r, r.URL.Path[1:]); err != nil {
+	} else if err := s.serve(w, r, r.URL.Path[1:]); err != nil {
 		log.Printf("Could not serve %s: %s\n", r.URL.Path[1:], err)
 		http.NotFound(w, r)
 	}
 }
 
-func executeTemplate(t *template.Template, w *http.ResponseWriter, data interface{}) {
-	if err := t.Execute(*w, data); err != nil {
+func executeTemplate(t *template.Template, w http.ResponseWriter, data interface{}) {
+	if err := t.Execute(w, data); err != nil {
 		log.Printf("Error executing template %s: %s", t.Name(), err)
 	}
 }
@@ -169,7 +169,7 @@ func (s *Server) handleAdd(r *http.Request) string {
 }
 
 // Serves the file if it is accessible.
-func (s *Server) serve(w *http.ResponseWriter, r *http.Request, file string) error {
+func (s *Server) serve(w http.ResponseWriter, r *http.Request, file string) error {
 	if strings.Contains("/", file) || file == "" {
 		return errors.New("Invalid file name")
 	}
@@ -196,11 +196,11 @@ func (s *Server) serve(w *http.ResponseWriter, r *http.Request, file string) err
 		default:
 			constraints.Downloads--
 		}
-		http.ServeFile(*w, r, s.directory+"/"+file)
+		http.ServeFile(w, r, s.directory+"/"+file)
 		constraints.Unlock()
 		return nil
 	}
-	http.ServeFile(*w, r, s.directory+"/"+file)
+	http.ServeFile(w, r, s.directory+"/"+file)
 	constraints.RUnlock()
 	return nil
 }
