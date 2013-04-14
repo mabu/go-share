@@ -4,6 +4,8 @@
 package share
 
 import (
+	"bytes"
+	"crypto/sha1"
 	"errors"
 	"html/template"
 	"io"
@@ -46,9 +48,10 @@ func (c *Constraints) expired() bool {
 // File sharing server.
 type Server struct {
 	sync.RWMutex
-	directory, password string
-	data                map[string]*Constraints
-	list                list
+	directory    string
+	data         map[string]*Constraints
+	list         list
+	passwordHash []byte
 }
 
 type list struct {
@@ -71,7 +74,7 @@ func New(directory, password string) (*Server, error) {
 	} else if fi.IsDir() == false {
 		return nil, newError(directory+" is not a directory", nil)
 	}
-	return &Server{directory: directory, password: password,
+	return &Server{directory: directory, passwordHash: hash(password),
 		data: make(map[string]*Constraints),
 		list: list{slice: make([]string, 0)}}, nil
 }
@@ -122,8 +125,8 @@ func executeTemplate(t *template.Template, w http.ResponseWriter, data interface
 }
 
 func (s *Server) handleAdd(r *http.Request) string {
-	if r.FormValue("password") != s.password {
-		log.Println("Wrong password:", r.FormValue("password"))
+	if !bytes.Equal(hash(r.FormValue("password")), s.passwordHash) {
+		log.Println("Wrong password")
 		return "Wrong password."
 	}
 	file, header, err := r.FormFile("file")
@@ -170,7 +173,7 @@ func (s *Server) handleAdd(r *http.Request) string {
 
 // Serves the file if it is accessible.
 func (s *Server) serve(w http.ResponseWriter, r *http.Request, file string) error {
-	if strings.Contains("/", file) || file == "" {
+	if strings.Contains(file, "/") || file == "" {
 		return errors.New("Invalid file name")
 	}
 	s.RLock()
@@ -229,7 +232,7 @@ func (s *Server) remove(file string) {
 }
 
 func (s *Server) add(file io.Reader, name string, c Constraints) error {
-	if strings.Contains("/", name) {
+	if strings.Contains(name, "/") {
 		return errors.New("Invalid file name")
 	}
 	flags := os.O_CREATE | os.O_TRUNC | os.O_WRONLY
@@ -254,4 +257,10 @@ func (s *Server) add(file io.Reader, name string, c Constraints) error {
 		time.AfterFunc(c.Expire.Sub(time.Now()), func() { s.remove(name) })
 	}
 	return nil
+}
+
+func hash(password string) []byte {
+	h := sha1.New()
+	h.Write([]byte(password))
+	return h.Sum(nil)
 }
