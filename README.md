@@ -26,16 +26,16 @@ Usage
 	go-share [-d DIRECTORY] [-p PORT]
 
 Runs on the port PORT (default: 80), stores files in the directory DIRECTORY
-(defaults to current directory).
+(defaults to creating a temporary directory).
 
 Example
 =======
 
-	$ mkdir shares
-	$ go-share -d shares -p 9321
+	$ go-share -p 9321
 	Please enter a password for file upload:
 	Please repeat the password:
-	Starting go-share on port 9321.
+	2014/02/10 04:13:57 Starting go-share on port 9321.
+	Storage in directory /tmp/go-share131365306
 
 Example lighttpd configuration
 ------------------------------
