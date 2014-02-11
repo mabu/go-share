@@ -14,6 +14,10 @@ import (
 	"github.com/mabu/go-share/share/storage"
 )
 
+// timeLayout is an ISO date and time layout that this package uses for
+// formatting and parsing.
+const timeLayout = "2006-01-02 15:04:05"
+
 // Server is a file sharing server.
 type Server struct {
 	passwordHash []byte
@@ -80,7 +84,7 @@ func (s *Server) handleAdd(r *http.Request) string {
 		Delete: r.FormValue("delete") != "",
 	}
 	if t := r.FormValue("expire"); t != "" {
-		utc, err := time.Parse("2006-01-02 15:04:05", t)
+		utc, err := time.Parse(timeLayout, t)
 		if err != nil {
 			log.Println("Error parsing expire:", err)
 			return "Error: invalid expiration date."

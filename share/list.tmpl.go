@@ -1,14 +1,12 @@
 package share
 
 import (
-	"fmt"
 	"html/template"
 	"time"
 )
 
 func defaultExpire() string {
-	t := time.Now().Add(24 * time.Hour)
-	return fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d", t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second())
+	return time.Now().Add(24 * time.Hour).Format(timeLayout)
 }
 
 var tmplList = template.Must(template.New("list").Funcs(template.FuncMap{"defaultExpire": defaultExpire}).Parse(`<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
